@@ -1,5 +1,6 @@
 use crate::helpers;
 use crate::response::album::AlbumTracksResponse;
+use crate::response::audio_features::AudioFeaturesResponse;
 use crate::response::playlist::PlaylistTracksResponse;
 use crate::response::search::SearchTrackResponse;
 use log::{info, warn};
@@ -98,6 +99,41 @@ pub async fn make_album_request(
 
     info!("Data gotten from API");
     let data = resp.json::<AlbumTracksResponse>().await?;
+
+    return Ok(data);
+}
+
+pub async fn make_audio_features_request(
+    track_ids: &[String],
+    token: &str,
+) -> Result<AudioFeaturesResponse, Error> {
+    info!("Fetching features for {} tracks", track_ids.len());
+
+    let url = format!("{}/audio-features", SPOTIFY_URL);
+    let (client, headers) = helpers::generate_request(token);
+
+    let ids = track_ids.join(",");
+    let client_builder = client
+        .get(&url)
+        .headers(headers)
+        .query(&[("ids", ids)])
+        .send();
+    let resp = match client_builder.await {
+        Ok(resp) => resp,
+        Err(err) => {
+            eprintln!("Something went wrong: Status: {:?}", err.status());
+            std::process::exit(1);
+        }
+    };
+
+    if resp.status().as_u16() > 299 {
+        warn!("Something went wrong. Status: {:?}", resp.status());
+        println!("Body:\n{}", resp.text().await.unwrap());
+        std::process::exit(1);
+    }
+
+    info!("Data gotten from API");
+    let data = resp.json::<AudioFeaturesResponse>().await?;
 
     return Ok(data);
 }

@@ -1,9 +1,10 @@
 use crate::requests;
+use crate::response::audio_features::AudioFeatures;
 use crate::response::authorization::ClientAuthorizeResponse;
 use crate::response::playlist::PlaylistTrack;
 use crate::response::spotify_types::Track;
 use base64::encode;
-use log::info;
+use log::{info, warn};
 use reqwest::header;
 
 const SPOTIFY_AUTH_URL: &'static str = "https://accounts.spotify.com/api/token";
@@ -28,7 +29,8 @@ impl Spotify {
     }
 
     async fn authorize(&mut self) {
-        let auth_key = format!("{}:{}", self.client_id, self.client_secret);
+        info!("Begin authorization completed");
+        let auth_key = format!("{}:{}", &self.client_id, &self.client_secret);
         let auth_key = encode(auth_key.as_bytes());
 
         let client = reqwest::Client::new();
@@ -50,13 +52,16 @@ impl Spotify {
 
         let resp = match client.post(&url).headers(headers).send().await {
             Ok(resp) => resp,
-            Err(_error) => panic!("Error making request"),
+            Err(error) => panic!("Error making auth request - {}", error),
         };
 
-        let data = match resp.json::<ClientAuthorizeResponse>().await {
-            Ok(resp) => resp,
-            Err(_error) => panic!("Error getting data from response"),
-        };
+        if resp.status().as_u16() > 299 {
+            warn!("Something went wrong. Status: {:?}", resp.status());
+            println!("Body:\n{}", resp.text().await.unwrap());
+            std::process::exit(1);
+        }
+        info!("Authorization completed");
+        let data = resp.json::<ClientAuthorizeResponse>().await.unwrap();
 
         self.token = Some(data.access_token);
     }
@@ -130,5 +135,20 @@ impl Spotify {
         }
 
         return songs;
+    }
+
+    pub async fn get_audio_features(&self, track_ids: Vec<String>) -> Vec<AudioFeatures> {
+        let mut audio_features: Vec<AudioFeatures> = Vec::new();
+
+        let track_chunks = track_ids.chunks(100);
+
+        for chunk in track_chunks {
+            let data =
+                requests::make_audio_features_request(chunk, &self.token.as_ref().unwrap()).await;
+            let mut items = data.unwrap().audio_features;
+            audio_features.append(&mut items);
+        }
+
+        return audio_features;
     }
 }

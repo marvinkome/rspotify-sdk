@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
 pub mod album;
+pub mod audio_features;
 pub mod authorization;
 pub mod playlist;
 pub mod search;
