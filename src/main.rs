@@ -1,9 +1,5 @@
+use rspotify_sdk::RSpotify;
 use serde::Deserialize;
-
-mod helpers;
-mod requests;
-mod response;
-mod spotify_sdk;
 
 #[derive(Deserialize, Debug)]
 struct Config {
@@ -20,7 +16,7 @@ async fn main() {
     let env = envy::from_env::<Config>().unwrap();
 
     // load lib
-    let spotify = spotify_sdk::Spotify::new(env.client_id, env.client_secret).await;
+    let rspotify = RSpotify::new(env.client_id, env.client_secret).await;
 
     // let _searched_song = spotify.search_track("Morph", "Twenty one pilots").await;
     // println!("{:?}", _searched_song.unwrap());
@@ -31,7 +27,7 @@ async fn main() {
     // let _album_tracks = spotify.get_album_tracks("5oT2zoIrVGJcbVZoNGGZwc").await;
     // println!("{:?}", _album_tracks.len());
 
-    let _audio_features = spotify
+    let _audio_features = rspotify
         .get_audio_features(vec![
             "3UaFnnUo80mv431WHEzaj9".to_string(),
             "77vDHmiANW3JS2gNN5q7pI".to_string(),
