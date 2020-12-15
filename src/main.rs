@@ -17,6 +17,9 @@ async fn main() {
     // let _searched_song = spotify.search_track("Morph", "Twenty one pilots").await;
     // println!("{:?}", _searched_song.unwrap());
 
-    let _playlist_tracks = spotify.get_playlist_tracks("6f3lchHmBQed8GnWmayLn6").await;
-    println!("{:?}", _playlist_tracks.len());
+    // let _playlist_tracks = spotify.get_playlist_tracks("6f3lchHmBQed8GnWmayLn6").await;
+    // println!("{:?}", _playlist_tracks.len());
+
+    let _album_tracks = spotify.get_album_tracks("5oT2zoIrVGJcbVZoNGGZwc").await;
+    println!("{:?}", _album_tracks.len());
 }

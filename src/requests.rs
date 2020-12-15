@@ -1,4 +1,5 @@
 use crate::helpers;
+use crate::response::album::AlbumTracksResponse;
 use crate::response::playlist::PlaylistTracksResponse;
 use crate::response::search::SearchTrackResponse;
 use log::{info, warn};
@@ -63,6 +64,40 @@ pub async fn make_playlist_request(
 
     info!("Data gotten from API");
     let data = resp.json::<PlaylistTracksResponse>().await?;
+
+    return Ok(data);
+}
+
+pub async fn make_album_request(
+    album_id: &str,
+    token: &str,
+    link: Option<&String>,
+) -> Result<AlbumTracksResponse, Error> {
+    info!("Fetching album {}", album_id);
+
+    let url = match link {
+        Some(link) => link.to_owned(),
+        None => format!("{}/albums/{}/tracks", SPOTIFY_URL, album_id),
+    };
+
+    let (client, headers) = helpers::generate_request(token);
+
+    let resp = match client.get(&url).headers(headers).send().await {
+        Ok(resp) => resp,
+        Err(err) => {
+            eprintln!("Something went wrong: Status: {:?}", err.status());
+            std::process::exit(1);
+        }
+    };
+
+    if resp.status().as_u16() > 299 {
+        warn!("Something went wrong. Status: {:?}", resp.status());
+        println!("Body:\n{}", resp.text().await.unwrap());
+        std::process::exit(1);
+    }
+
+    info!("Data gotten from API");
+    let data = resp.json::<AlbumTracksResponse>().await?;
 
     return Ok(data);
 }

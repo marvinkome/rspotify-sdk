@@ -99,4 +99,36 @@ impl Spotify {
 
         return songs;
     }
+
+    pub async fn get_album_tracks(&self, id: &str) -> Vec<Track> {
+        let data = requests::make_album_request(id, &self.token.as_ref().unwrap(), None)
+            .await
+            .unwrap();
+        let mut next = data.next;
+
+        info!(
+            "Setting initial items with current album - Length {:?}",
+            data.items.len()
+        );
+        let mut songs = data.items;
+
+        while next.is_some() {
+            info!("Fetching next set of songs - {:?}", next);
+            let data =
+                requests::make_album_request(id, &self.token.as_ref().unwrap(), next.as_ref())
+                    .await
+                    .unwrap();
+
+            next = data.next;
+
+            let mut items = data.items;
+            info!(
+                "Merging items with current album - Length {:?}",
+                items.len()
+            );
+            songs.append(&mut items);
+        }
+
+        return songs;
+    }
 }

@@ -33,7 +33,7 @@ pub struct Artist {
 
 #[derive(Deserialize, Debug)]
 pub struct Track {
-    pub album: Album,
+    pub album: Option<Album>,
     pub artists: Vec<Artist>,
     pub available_markets: Vec<String>,
     pub disc_number: u32,
@@ -42,7 +42,7 @@ pub struct Track {
     pub href: String,
     pub id: String,
     pub name: String,
-    pub popularity: u32,
+    pub popularity: Option<u32>,
     pub preview_url: Option<String>,
     pub track_number: u32,
     pub r#type: String,
