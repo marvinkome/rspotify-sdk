@@ -9,13 +9,13 @@ use reqwest::header;
 const SPOTIFY_AUTH_URL: &'static str = "https://accounts.spotify.com/api/token";
 
 pub struct Spotify {
-    client_id: &'static str,
-    client_secret: &'static str,
+    client_id: String,
+    client_secret: String,
     token: Option<String>,
 }
 
 impl Spotify {
-    pub async fn new(client_id: &'static str, client_secret: &'static str) -> Self {
+    pub async fn new(client_id: String, client_secret: String) -> Self {
         let mut spotify = Spotify {
             client_id,
             client_secret,

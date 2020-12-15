@@ -1,18 +1,26 @@
+use serde::Deserialize;
+
 mod helpers;
 mod requests;
 mod response;
 mod spotify_sdk;
 
+#[derive(Deserialize, Debug)]
+struct Config {
+    client_id: String,
+    client_secret: String,
+}
+
 #[tokio::main]
 async fn main() {
+    // SETUP
+    dotenv::dotenv().expect("Can't load end. Take down program");
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
+    let env = envy::from_env::<Config>().unwrap();
 
-    let spotify = spotify_sdk::Spotify::new(
-        "c8e126040a874c10b8a95721f2ee1e40",
-        "e5acaf30069c462892689751881589d3",
-    )
-    .await;
+    // load lib
+    let spotify = spotify_sdk::Spotify::new(env.client_id, env.client_secret).await;
 
     // let _searched_song = spotify.search_track("Morph", "Twenty one pilots").await;
     // println!("{:?}", _searched_song.unwrap());
