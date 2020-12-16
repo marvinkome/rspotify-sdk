@@ -1,5 +1,4 @@
 mod cli;
-mod cli_handler;
 
 use cli::RSpotifyCli;
 use rspotify_sdk::RSpotify;
@@ -28,11 +27,11 @@ async fn main() -> Result<()> {
     // Handle args
     match args {
         RSpotifyCli::GetPlaylistTracks { id, with_features } => {
-            cli_handler::handle_fetch_playlist(&id, with_features, &rspotify).await?;
+            cli::handler::handle_fetch_playlist(&id, with_features, &rspotify).await?;
             Ok(())
         }
         RSpotifyCli::GetAlbumTracks { id, with_features } => {
-            cli_handler::handle_fetch_album(&id, with_features, &rspotify).await?;
+            cli::handler::handle_fetch_album(&id, with_features, &rspotify).await?;
             Ok(())
         }
         RSpotifyCli::Search {
@@ -40,7 +39,7 @@ async fn main() -> Result<()> {
             artist,
             with_features,
         } => {
-            cli_handler::handle_search_song(&title, &artist, with_features, &rspotify).await?;
+            cli::handler::handle_search_song(&title, &artist, with_features, &rspotify).await?;
             Ok(())
         }
     }

@@ -1,6 +1,5 @@
-mod helpers;
-mod requests;
 pub mod response;
+mod utils;
 
 use crate::response::audio_features::AudioFeatures;
 use crate::response::authorization::ClientAuthorizeResponse;
@@ -9,6 +8,7 @@ use crate::response::spotify_types::Track;
 use base64::encode;
 use log::{info, warn};
 use reqwest::header;
+use utils::requests;
 
 const SPOTIFY_AUTH_URL: &'static str = "https://accounts.spotify.com/api/token";
 

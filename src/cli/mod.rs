@@ -1,3 +1,5 @@
+pub mod handler;
+
 use structopt::StructOpt;
 
 /// CLI application for getting data from spotify api
