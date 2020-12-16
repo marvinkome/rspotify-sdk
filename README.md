@@ -8,5 +8,5 @@ A simple cli for getting data from spotify on the terminal
 example
 
 ```bash
-rspotify get-playlist-tracks 5YGnh3TcMGR9vdMtOTdgnH --with-features | tee playlist.json
+rspotify-sdk get-playlist-tracks 5YGnh3TcMGR9vdMtOTdgnH --with-features | tee playlist.json
 ```
