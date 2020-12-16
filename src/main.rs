@@ -32,8 +32,7 @@ async fn main() -> Result<()> {
             Ok(())
         }
         RSpotifyCli::GetAlbumTracks { id, with_features } => {
-            // do somthing
-            println!("Fetch album {} with features? {}", id, with_features);
+            cli_handler::handle_fetch_album(&id, with_features, &rspotify).await?;
             Ok(())
         }
         RSpotifyCli::Search {
@@ -41,11 +40,7 @@ async fn main() -> Result<()> {
             artist,
             with_features,
         } => {
-            // do somthing
-            println!(
-                "Search for {} by {} with features? {}",
-                title, artist, with_features
-            );
+            cli_handler::handle_search_song(&title, &artist, with_features, &rspotify).await?;
             Ok(())
         }
     }
