@@ -1,13 +1,13 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AlbumCover {
     pub height: u32,
     pub url: String,
     pub width: u32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Album {
     pub album_type: String,
     pub available_markets: Vec<String>,
@@ -22,7 +22,7 @@ pub struct Album {
     pub uri: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Artist {
     pub href: String,
     pub id: String,
@@ -31,7 +31,7 @@ pub struct Artist {
     pub uri: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Track {
     pub album: Option<Album>,
     pub artists: Vec<Artist>,

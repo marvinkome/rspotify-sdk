@@ -1,6 +1,6 @@
 mod helpers;
 mod requests;
-mod response;
+pub mod response;
 
 use crate::response::audio_features::AudioFeatures;
 use crate::response::authorization::ClientAuthorizeResponse;
