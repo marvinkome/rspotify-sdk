@@ -1,3 +1,4 @@
+use crate::Config;
 use rspotify_sdk::response::audio_features::AudioFeatures;
 use rspotify_sdk::response::spotify_types::Track;
 use rspotify_sdk::RSpotify;
@@ -14,7 +15,8 @@ struct TrackWithFeatures {
     features: AudioFeatures,
 }
 
-pub async fn handle_fetch_playlist(id: &str, with_features: bool, client: &RSpotify) -> Result<()> {
+pub async fn handle_fetch_playlist(id: &str, with_features: bool, env: Config) -> Result<()> {
+    let client = RSpotify::new(env.client_id, env.client_secret, Some("user"), Some("")).await;
     let data = client.get_playlist_tracks(id).await;
 
     if with_features {
@@ -45,7 +47,8 @@ pub async fn handle_fetch_playlist(id: &str, with_features: bool, client: &RSpot
     return Ok(());
 }
 
-pub async fn handle_fetch_album(id: &str, with_features: bool, client: &RSpotify) -> Result<()> {
+pub async fn handle_fetch_album(id: &str, with_features: bool, env: Config) -> Result<()> {
+    let client = RSpotify::new(env.client_id, env.client_secret, None, None).await;
     let data = client.get_album_tracks(id).await;
 
     if with_features {
@@ -77,8 +80,9 @@ pub async fn handle_search_song(
     title: &str,
     artist: &str,
     with_features: bool,
-    client: &RSpotify,
+    env: Config,
 ) -> Result<()> {
+    let client = RSpotify::new(env.client_id, env.client_secret, None, None).await;
     let data = match client.search_track(title, artist).await {
         Some(track) => track,
         None => panic!("Track not found"),

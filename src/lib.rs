@@ -2,7 +2,7 @@ pub mod response;
 mod utils;
 
 use crate::response::audio_features::AudioFeatures;
-use crate::response::authorization::ClientAuthorizeResponse;
+use crate::response::authorization::{ClientAuthorizeResponse, UserAuthorizeResponse};
 use crate::response::playlist::PlaylistTrack;
 use crate::response::spotify_types::Track;
 use base64::encode;
@@ -19,20 +19,28 @@ pub struct RSpotify {
 }
 
 impl RSpotify {
-    pub async fn new(client_id: String, client_secret: String) -> Self {
+    pub async fn new(
+        client_id: String,
+        client_secret: String,
+        auth_type: Option<&str>,
+        scope: Option<&str>,
+    ) -> Self {
         let mut spotify = RSpotify {
             client_id,
             client_secret,
             token: None,
         };
 
-        spotify.authorize().await;
+        match auth_type {
+            Some("user") => spotify.authorize_user(scope.unwrap()).await,
+            _ => spotify.authorize().await,
+        }
 
         return spotify;
     }
 
     async fn authorize(&mut self) {
-        info!("Begin authorization completed");
+        info!("Begin authorization");
         let auth_key = format!("{}:{}", &self.client_id, &self.client_secret);
         let auth_key = encode(auth_key.as_bytes());
 
@@ -67,6 +75,75 @@ impl RSpotify {
         let data = resp.json::<ClientAuthorizeResponse>().await.unwrap();
 
         self.token = Some(data.access_token);
+    }
+
+    async fn authorize_user(&mut self, scope: &str) {
+        info!("Begin user authorization");
+
+        let auth_key = format!("{}:{}", &self.client_id, &self.client_secret);
+        let auth_key = encode(auth_key.as_bytes());
+        let refresh_token = utils::read_from_auth_cache("refresh_token");
+        let mut code: String = String::new();
+
+        // ask for code is no refresh token
+        if refresh_token.is_err() {
+            code = utils::open_browser_for_auth(&self.client_id, scope, false).unwrap();
+        }
+
+        // make authorization request
+        let client = reqwest::Client::new();
+        let url = match refresh_token {
+            Ok(token) => format!(
+                "{}?grant_type=refresh_token&refresh_token={}&redirect_ur\
+            i=http://localhost:8008/callback",
+                SPOTIFY_AUTH_URL, token
+            ),
+            Err(_e) => format!(
+                "{}?grant_type=authorization_code&code={}&redirect_ur\
+            i=http://localhost:8008/callback",
+                SPOTIFY_AUTH_URL, code
+            ),
+        };
+
+        let mut headers = header::HeaderMap::new();
+        headers.insert(
+            header::CONTENT_TYPE,
+            header::HeaderValue::from_str("application/x-www-form-urlencoded").unwrap(),
+        );
+        headers.insert(
+            header::AUTHORIZATION,
+            header::HeaderValue::from_str(&format!("Basic {}", auth_key)).unwrap(),
+        );
+        headers.insert(
+            header::CONTENT_LENGTH,
+            header::HeaderValue::from_str("0").unwrap(),
+        );
+
+        let resp = match client.post(&url).headers(headers).send().await {
+            Ok(resp) => resp,
+            Err(error) => panic!("Error making auth request - {}", error),
+        };
+
+        if resp.status().as_u16() > 299 {
+            warn!("Something went wrong. Status: {:?}", resp.status());
+            println!("Body:\n{}", resp.text().await.unwrap());
+            std::process::exit(1);
+        }
+
+        // authorization completed
+        info!("Authorization completed");
+        let data = resp.json::<UserAuthorizeResponse>().await.unwrap();
+        self.token = Some(data.access_token);
+
+        if data.refresh_token.is_some() {
+            let token = data.refresh_token.unwrap();
+            match utils::write_to_auth_cache("refresh_token", &token) {
+                Ok(_) => (),
+                Err(e) => {
+                    warn!("Failed to cache refresh token: {:?}", e);
+                }
+            }
+        }
     }
 
     pub async fn search_track(&self, title: &str, artist: &str) -> Option<Track> {

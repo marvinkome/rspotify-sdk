@@ -939,12 +939,14 @@ dependencies = [
  "env_logger",
  "envy",
  "futures",
+ "httparse",
  "log",
  "reqwest",
  "serde",
  "serde_json",
  "structopt",
  "tokio",
+ "url",
 ]
 
 [[package]]
