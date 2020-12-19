@@ -1,10 +1,12 @@
 pub mod response;
 mod utils;
 
+use crate::response::album::UserAlbum;
 use crate::response::audio_features::AudioFeatures;
 use crate::response::authorization::{ClientAuthorizeResponse, UserAuthorizeResponse};
-use crate::response::playlist::PlaylistTrack;
+use crate::response::playlist::{PlaylistTrack, UserPlaylist};
 use crate::response::spotify_types::Track;
+use crate::response::track::SavedTrack;
 use base64::encode;
 use log::{info, warn};
 use reqwest::header;
@@ -16,6 +18,7 @@ pub struct RSpotify {
     client_id: String,
     client_secret: String,
     token: Option<String>,
+    request: Option<requests::SpotifyRequest>,
 }
 
 impl RSpotify {
@@ -29,6 +32,7 @@ impl RSpotify {
             client_id,
             client_secret,
             token: None,
+            request: None,
         };
 
         match auth_type {
@@ -74,6 +78,7 @@ impl RSpotify {
         info!("Authorization completed");
         let data = resp.json::<ClientAuthorizeResponse>().await.unwrap();
 
+        self.request = Some(requests::SpotifyRequest::new(&data.access_token));
         self.token = Some(data.access_token);
     }
 
@@ -133,6 +138,8 @@ impl RSpotify {
         // authorization completed
         info!("Authorization completed");
         let data = resp.json::<UserAuthorizeResponse>().await.unwrap();
+
+        self.request = Some(requests::SpotifyRequest::new(&data.access_token));
         self.token = Some(data.access_token);
 
         if data.refresh_token.is_some() {
@@ -147,38 +154,28 @@ impl RSpotify {
     }
 
     pub async fn search_track(&self, title: &str, artist: &str) -> Option<Track> {
-        let data =
-            requests::make_search_request(title, artist, &self.token.as_ref().unwrap()).await;
-
+        let request = self.request.as_ref().unwrap();
+        let data = request.make_search_request(title, artist).await.unwrap();
         data.tracks.items.into_iter().nth(0)
     }
 
     pub async fn get_playlist_tracks(&self, id: &str) -> Vec<PlaylistTrack> {
-        let data = requests::make_playlist_request(id, &self.token.as_ref().unwrap(), None)
-            .await
-            .unwrap();
+        let request = self.request.as_ref().unwrap();
+        let data = request.make_playlist_request(id, None).await.unwrap();
+
         let mut next = data.next;
 
-        info!(
-            "Setting initial items with current playlist - Length {:?}",
-            data.items.len()
-        );
         let mut songs = data.items;
 
         while next.is_some() {
-            info!("Fetching next set of songs - {:?}", next);
-            let data =
-                requests::make_playlist_request(id, &self.token.as_ref().unwrap(), next.as_ref())
-                    .await
-                    .unwrap();
+            let data = request
+                .make_playlist_request(id, next.as_ref())
+                .await
+                .unwrap();
 
             next = data.next;
 
             let mut items = data.items;
-            info!(
-                "Merging items with current playlist - Length {:?}",
-                items.len()
-            );
             songs.append(&mut items);
         }
 
@@ -186,31 +183,18 @@ impl RSpotify {
     }
 
     pub async fn get_album_tracks(&self, id: &str) -> Vec<Track> {
-        let data = requests::make_album_request(id, &self.token.as_ref().unwrap(), None)
-            .await
-            .unwrap();
+        let request = self.request.as_ref().unwrap();
+        let data = request.make_album_request(id, None).await.unwrap();
         let mut next = data.next;
 
-        info!(
-            "Setting initial items with current album - Length {:?}",
-            data.items.len()
-        );
         let mut songs = data.items;
 
         while next.is_some() {
-            info!("Fetching next set of songs - {:?}", next);
-            let data =
-                requests::make_album_request(id, &self.token.as_ref().unwrap(), next.as_ref())
-                    .await
-                    .unwrap();
+            let data = request.make_album_request(id, next.as_ref()).await.unwrap();
 
             next = data.next;
 
             let mut items = data.items;
-            info!(
-                "Merging items with current album - Length {:?}",
-                items.len()
-            );
             songs.append(&mut items);
         }
 
@@ -218,17 +202,83 @@ impl RSpotify {
     }
 
     pub async fn get_audio_features(&self, track_ids: Vec<String>) -> Vec<AudioFeatures> {
+        let request = self.request.as_ref().unwrap();
         let mut audio_features: Vec<AudioFeatures> = Vec::new();
 
         let track_chunks = track_ids.chunks(100);
 
         for chunk in track_chunks {
-            let data =
-                requests::make_audio_features_request(chunk, &self.token.as_ref().unwrap()).await;
-            let mut items = data.unwrap().audio_features;
+            let data = request.make_audio_features_request(chunk).await.unwrap();
+            let mut items = data.audio_features;
             audio_features.append(&mut items);
         }
 
         return audio_features;
+    }
+
+    pub async fn get_user_playlists(&self) -> Vec<UserPlaylist> {
+        let request = self.request.as_ref().unwrap();
+        let data = request.make_user_playlist_request(None).await.unwrap();
+        let mut next = data.next;
+
+        let mut songs = data.items;
+
+        while next.is_some() {
+            let data = request
+                .make_user_playlist_request(next.as_ref())
+                .await
+                .unwrap();
+
+            next = data.next;
+
+            let mut items = data.items;
+            songs.append(&mut items);
+        }
+
+        return songs;
+    }
+
+    pub async fn get_user_albums(&self) -> Vec<UserAlbum> {
+        let request = self.request.as_ref().unwrap();
+        let data = request.make_user_album_request(None).await.unwrap();
+        let mut next = data.next;
+
+        let mut songs = data.items;
+
+        while next.is_some() {
+            let data = request
+                .make_user_album_request(next.as_ref())
+                .await
+                .unwrap();
+
+            next = data.next;
+
+            let mut items = data.items;
+            songs.append(&mut items);
+        }
+
+        return songs;
+    }
+
+    pub async fn get_user_liked_songs(&self) -> Vec<SavedTrack> {
+        let request = self.request.as_ref().unwrap();
+        let data = request.make_user_saved_song_request(None).await.unwrap();
+        let mut next = data.next;
+
+        let mut songs = data.items;
+
+        while next.is_some() {
+            let data = request
+                .make_user_saved_song_request(next.as_ref())
+                .await
+                .unwrap();
+
+            next = data.next;
+
+            let mut items = data.items;
+            songs.append(&mut items);
+        }
+
+        return songs;
     }
 }

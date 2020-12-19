@@ -1,4 +1,5 @@
 pub mod handler;
+pub mod user;
 
 use structopt::StructOpt;
 
@@ -36,6 +37,27 @@ pub enum RSpotifyCli {
         #[structopt(long = "artist")]
         artist: String,
 
+        /// adds the tracks features to the response
+        #[structopt(long = "with-features")]
+        with_features: bool,
+    },
+
+    /// Get all user playlists
+    GetMyPlaylists {
+        /// adds the tracks features to the response
+        #[structopt(long = "with-features")]
+        with_features: bool,
+    },
+
+    /// Get all user albums
+    GetMyAlbums {
+        /// adds the tracks features to the response
+        #[structopt(long = "with-features")]
+        with_features: bool,
+    },
+
+    /// Get all user liked songs
+    GetMyLikedSongs {
         /// adds the tracks features to the response
         #[structopt(long = "with-features")]
         with_features: bool,

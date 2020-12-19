@@ -111,3 +111,99 @@ pub async fn handle_search_song(
     std::io::stdout().write_all(json_resp.as_bytes()).unwrap();
     return Ok(());
 }
+
+pub async fn handle_get_user_playlists(with_features: bool, env: Config) -> Result<()> {
+    let mut user_data = super::user::UserData::new(&env.client_id, &env.client_secret).await;
+    user_data.get_playlists_track().await;
+
+    let tracks = user_data.songs;
+
+    if with_features {
+        let client = RSpotify::new(env.client_id, env.client_secret, None, None).await;
+        let track_ids: Vec<String> = tracks.iter().map(|track| track.id.clone()).collect();
+
+        let features = client.get_audio_features(track_ids).await;
+
+        // merge data with features
+        let data_with_features: Vec<TrackWithFeatures> = tracks
+            .iter()
+            .zip(features)
+            .map(|(track, features)| TrackWithFeatures {
+                track: track.clone(),
+                features: features,
+            })
+            .collect();
+
+        let json_resp = serde_json::to_string(&data_with_features)?;
+        std::io::stdout().write_all(json_resp.as_bytes()).unwrap();
+        return Ok(());
+    }
+
+    let json_resp = serde_json::to_string(&tracks)?;
+    std::io::stdout().write_all(json_resp.as_bytes()).unwrap();
+    return Ok(());
+}
+
+pub async fn handle_get_user_albums(with_features: bool, env: Config) -> Result<()> {
+    let mut user_data = super::user::UserData::new(&env.client_id, &env.client_secret).await;
+    user_data.get_albums_track().await;
+
+    let tracks = user_data.songs;
+
+    if with_features {
+        let client = RSpotify::new(env.client_id, env.client_secret, None, None).await;
+        let track_ids: Vec<String> = tracks.iter().map(|track| track.id.clone()).collect();
+
+        let features = client.get_audio_features(track_ids).await;
+
+        // merge data with features
+        let data_with_features: Vec<TrackWithFeatures> = tracks
+            .iter()
+            .zip(features)
+            .map(|(track, features)| TrackWithFeatures {
+                track: track.clone(),
+                features: features,
+            })
+            .collect();
+
+        let json_resp = serde_json::to_string(&data_with_features)?;
+        std::io::stdout().write_all(json_resp.as_bytes()).unwrap();
+        return Ok(());
+    }
+
+    let json_resp = serde_json::to_string(&tracks)?;
+    std::io::stdout().write_all(json_resp.as_bytes()).unwrap();
+    return Ok(());
+}
+
+pub async fn handle_get_liked_songs(with_features: bool, env: Config) -> Result<()> {
+    let mut user_data = super::user::UserData::new(&env.client_id, &env.client_secret).await;
+    user_data.get_liked_songs().await;
+
+    let tracks = user_data.songs;
+
+    if with_features {
+        let client = RSpotify::new(env.client_id, env.client_secret, None, None).await;
+        let track_ids: Vec<String> = tracks.iter().map(|track| track.id.clone()).collect();
+
+        let features = client.get_audio_features(track_ids).await;
+
+        // merge data with features
+        let data_with_features: Vec<TrackWithFeatures> = tracks
+            .iter()
+            .zip(features)
+            .map(|(track, features)| TrackWithFeatures {
+                track: track.clone(),
+                features: features,
+            })
+            .collect();
+
+        let json_resp = serde_json::to_string(&data_with_features)?;
+        std::io::stdout().write_all(json_resp.as_bytes()).unwrap();
+        return Ok(());
+    }
+
+    let json_resp = serde_json::to_string(&tracks)?;
+    std::io::stdout().write_all(json_resp.as_bytes()).unwrap();
+    return Ok(());
+}

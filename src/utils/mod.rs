@@ -1,15 +1,14 @@
-pub mod helpers;
+pub mod raxios;
 pub mod requests;
 
 use log::info;
 use std::collections::HashMap;
-use std::io::prelude::*;
-use std::io::{Error, ErrorKind, BufWriter};
 use std::fs::File;
-use std::path::Path;
+use std::io::prelude::*;
+use std::io::{BufWriter, Error, ErrorKind};
 use std::net::{TcpListener, TcpStream};
+use std::path::Path;
 use url::Url;
-
 
 const SPOTIFY_AUTHORIZATION_URL: &'static str = "https://accounts.spotify.com/authorize";
 
@@ -139,16 +138,15 @@ pub fn write_to_auth_cache(key: &str, value: &str) -> std::io::Result<()> {
     // read current cache items to json
     let path = Path::new("auth.json");
     let file = match path.exists() {
-        true => {
-            std::fs::read_to_string("auth.json").unwrap()
-        }
+        true => std::fs::read_to_string("auth.json").unwrap(),
         false => {
             let mut buffer = String::new();
-            File::create("auth.json").unwrap().read_to_string(&mut buffer)?;
+            File::create("auth.json")
+                .unwrap()
+                .read_to_string(&mut buffer)?;
             buffer
         }
     };
-
 
     let mut cache = match file.len() {
         0 => HashMap::new(),

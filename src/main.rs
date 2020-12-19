@@ -37,6 +37,16 @@ async fn main() -> Result<()> {
         } => {
             cli::handler::handle_search_song(&title, &artist, with_features, env).await?;
         }
+        // user data
+        RSpotifyCli::GetMyPlaylists { with_features } => {
+            cli::handler::handle_get_user_playlists(with_features, env).await?;
+        }
+        RSpotifyCli::GetMyAlbums { with_features } => {
+            cli::handler::handle_get_user_albums(with_features, env).await?;
+        }
+        RSpotifyCli::GetMyLikedSongs { with_features } => {
+            cli::handler::handle_get_liked_songs(with_features, env).await?;
+        }
     }
 
     Ok(())
