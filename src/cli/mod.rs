@@ -62,4 +62,11 @@ pub enum RSpotifyCli {
         #[structopt(long = "with-features")]
         with_features: bool,
     },
+
+    /// Get all user data (playlists, liked songs, followed albums)
+    GetMyData {
+        /// adds the tracks features to the response
+        #[structopt(long = "with-features")]
+        with_features: bool,
+    },
 }

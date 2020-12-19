@@ -47,6 +47,9 @@ async fn main() -> Result<()> {
         RSpotifyCli::GetMyLikedSongs { with_features } => {
             cli::handler::handle_get_liked_songs(with_features, env).await?;
         }
+        RSpotifyCli::GetMyData { with_features } => {
+            cli::handler::handle_get_all_data(with_features, env).await?;
+        }
     }
 
     Ok(())
